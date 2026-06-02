@@ -10,7 +10,6 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Reporte de Turnos - IPS</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap');
 
@@ -585,30 +584,35 @@
 
 <!-- SECCIÓN EXPORTAR -->
 <div id="tab-exportar" class="section">
-  <div class="section-tip">📄 Genera tu reporte en PDF listo para compartir o imprimir.</div>
+  <div class="section-tip">📄 Toca "Ver Reporte" — se abrirá una vista del reporte. Luego toca el menú de tu navegador y elige <strong>"Imprimir" → "Guardar como PDF"</strong>.</div>
 
   <div class="card">
     <div class="card-title">Opciones de Exportación</div>
     <div class="field">
-      <label>Nombre del archivo PDF</label>
+      <label>Nombre del archivo</label>
       <input type="text" id="pdfNombre" value="Reporte_Turnos" />
-    </div>
-    <div class="field">
-      <label>Orientación</label>
-      <select id="pdfOrientacion">
-        <option value="p">Vertical (Portrait)</option>
-        <option value="l">Horizontal (Landscape)</option>
-      </select>
     </div>
   </div>
 
-  <div class="pdf-actions">
-    <button class="btn btn-gold btn-full" onclick="generarPDF()">
-      📥 Descargar PDF
+  <div style="display:grid;gap:10px;margin-top:4px">
+    <button class="btn btn-gold btn-full" onclick="generarPDF()" style="padding:16px;font-size:1rem">
+      📄 Ver Reporte (guardar PDF)
     </button>
-    <button class="btn btn-primary btn-full" onclick="compartirPDF()">
-      📤 Compartir PDF
+    <button class="btn btn-teal btn-full" onclick="compartirPDF()">
+      📤 Compartir Reporte
     </button>
+  </div>
+
+  <div class="card" style="margin-top:16px;background:#fffbeb;border-color:#fde68a">
+    <div style="font-size:0.82rem;color:#92400e;line-height:1.6">
+      <strong>📱 ¿Cómo guardar como PDF en Android?</strong><br/>
+      1. Toca "Ver Reporte"<br/>
+      2. Se abre el reporte en una pestaña nueva<br/>
+      3. Toca los 3 puntos ⋮ del navegador<br/>
+      4. Toca <strong>"Imprimir"</strong><br/>
+      5. Arriba donde dice impresora, elige <strong>"Guardar como PDF"</strong><br/>
+      6. Toca el botón azul de descargar ✅
+    </div>
   </div>
 
   <div style="margin-top:16px">
@@ -817,187 +821,132 @@ function formatFecha(fecha) {
   return `${parseInt(d)}/${meses[parseInt(m)-1]}/${y}`;
 }
 
-// =================== PDF ===================
-function generarPDF(compartir = false) {
-  if (datos.turnos.length === 0) { showToast('⚠️ No hay turnos', 'error'); return null; }
-  const { jsPDF } = window.jspdf;
-  const orientacion = document.getElementById('pdfOrientacion').value;
-  const doc = new jsPDF({ orientation: orientacion, unit: 'mm', format: 'a4' });
-  const pw = orientacion === 'p' ? 210 : 297;
-  const ph = orientacion === 'p' ? 297 : 210;
-  const mg = 18;
-  let y = mg;
-
-  // Fondo header
-  doc.setFillColor(26, 58, 92);
-  doc.rect(0, 0, pw, 36, 'F');
-  // Barra dorada
-  doc.setFillColor(212, 168, 67);
-  doc.rect(0, 36, pw, 2.5, 'F');
-
-  // Empresa
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text(datos.empresa, pw / 2, 14, { align: 'center' });
-  // Frase
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(200, 230, 230);
-  doc.text(datos.frase, pw / 2, 22, { align: 'center' });
-  // Lema
-  doc.setFontSize(7);
-  doc.setTextColor(180, 210, 210);
-  const lemaLines = doc.splitTextToSize(datos.lema, pw - 30);
-  doc.text(lemaLines, pw / 2, 29, { align: 'center' });
-
-  y = 46;
-
-  // Título reporte
-  doc.setFillColor(240, 248, 255);
-  doc.roundedRect(mg, y, pw - mg * 2, 10, 2, 2, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(26, 58, 92);
-  doc.text('REPORTE DE TURNOS', pw / 2, y + 7, { align: 'center' });
-  y += 17;
-
-  // Datos empleado
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(mg, y, pw - mg * 2, 28, 2, 2, 'F');
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(mg, y, pw - mg * 2, 28, 2, 2, 'S');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(13, 148, 136);
-  doc.text('DATOS DEL EMPLEADO', mg + 5, y + 6);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(26, 58, 92);
-  doc.text('Nombre:', mg + 5, y + 13);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30, 41, 59);
-  doc.text(datos.nombre, mg + 30, y + 13);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(26, 58, 92);
-  doc.text('Documento:', mg + 5, y + 19);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30, 41, 59);
-  doc.text(String(datos.documento), mg + 30, y + 19);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(26, 58, 92);
-  doc.text('Cuenta:', mg + 5, y + 25);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30, 41, 59);
-  doc.text(`${datos.cuenta}  ·  ${datos.tipoCuenta}  ·  ${datos.banco}`, mg + 30, y + 25);
-  y += 35;
-
-  // Tabla header
-  const colWidths = [14, 40, 26, pw - mg * 2 - 14 - 40 - 26];
-  const cols = ['#', 'Fecha', 'Horas', 'Nombre del Paciente'];
-  doc.setFillColor(26, 58, 92);
-  doc.roundedRect(mg, y, pw - mg * 2, 9, 1, 1, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  let cx = mg + 3;
-  cols.forEach((c, i) => {
-    doc.text(c, cx, y + 6);
-    cx += colWidths[i];
-  });
-  y += 9;
-
-  // Filas
-  datos.turnos.forEach((t, i) => {
-    const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
-    doc.setFillColor(...bg);
-    doc.rect(mg, y, pw - mg * 2, 8, 'F');
-    doc.setDrawColor(226, 232, 240);
-    doc.line(mg, y + 8, mg + pw - mg * 2, y + 8);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(30, 41, 59);
-    cx = mg + 3;
-    const rowData = [String(i + 1), formatFecha(t.fecha), `${t.horas} horas`, t.paciente];
-    rowData.forEach((d, j) => {
-      if (j === 0) { doc.setFont('helvetica', 'bold'); doc.setTextColor(13, 148, 136); }
-      else { doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 41, 59); }
-      doc.text(d, cx, y + 5.5);
-      cx += colWidths[j];
-    });
-    y += 8;
-
-    // Nueva página si es necesario
-    if (y > ph - 40) {
-      doc.addPage();
-      y = 20;
-    }
-  });
-
-  // Totales
-  y += 5;
+// =================== PDF (sin librerías externas) ===================
+function construirHTMLReporte() {
   const totalHoras = datos.turnos.reduce((s, t) => s + Number(t.horas || 0), 0);
-  doc.setFillColor(26, 58, 92);
-  doc.roundedRect(mg, y, pw - mg * 2, 12, 2, 2, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text('TOTAL:', mg + 5, y + 8);
-  doc.setTextColor(20, 184, 166);
-  doc.text(`${datos.turnos.length} turnos  ·  ${totalHoras} horas totales`, mg + 26, y + 8);
-  y += 20;
-
-  // Pie de página
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7);
-  doc.setTextColor(100, 116, 139);
-  const lemaLines2 = doc.splitTextToSize(datos.lema, pw - mg * 2);
-  doc.text(lemaLines2, pw / 2, y, { align: 'center' });
-  y += lemaLines2.length * 4 + 4;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
   const fechaGen = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
-  doc.text(`Generado el ${fechaGen}`, pw / 2, y, { align: 'center' });
 
-  return doc;
+  const filas = datos.turnos.map((t, i) => `
+    <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8fafc'}">
+      <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;font-weight:700;color:#0d9488;text-align:center">${i+1}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${formatFecha(t.fecha)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0;text-align:center">${t.horas} h</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e2e8f0">${t.paciente}</td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Nunito',Arial,sans-serif; background:#fff; color:#1e293b; }
+  .header { background:#1a3a5c; color:#fff; padding:22px 30px 18px; text-align:center; }
+  .header-bar { height:5px; background:linear-gradient(90deg,#0d9488,#d4a843,#0d9488); }
+  .empresa { font-size:15px; font-weight:800; letter-spacing:0.5px; }
+  .frase { font-size:10px; opacity:0.8; margin-top:4px; }
+  .lema { font-size:9px; opacity:0.65; margin-top:3px; font-style:italic; }
+  .titulo-reporte { background:#e8f4f8; text-align:center; padding:10px; font-size:14px; font-weight:800; color:#1a3a5c; letter-spacing:1px; border-bottom:2px solid #0d9488; }
+  .empleado-box { background:#f8fafc; border:1px solid #e2e8f0; margin:16px 20px; border-radius:8px; padding:14px 18px; }
+  .empleado-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#0d9488; font-weight:800; margin-bottom:8px; }
+  .empleado-row { display:flex; gap:6px; margin-bottom:5px; font-size:11px; }
+  .empleado-key { font-weight:700; color:#1a3a5c; min-width:90px; }
+  table { width:calc(100% - 40px); margin:0 20px; border-collapse:collapse; font-size:11px; }
+  th { background:#1a3a5c; color:#fff; padding:9px 10px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; }
+  th:first-child { text-align:center; width:40px; }
+  th:nth-child(3) { text-align:center; width:60px; }
+  .total-row { background:#1a3a5c; color:#fff; }
+  .total-row td { padding:10px 12px; font-weight:800; font-size:12px; }
+  .total-val { color:#14b8a6; }
+  .pie { text-align:center; padding:16px 20px 10px; font-size:9px; color:#64748b; font-style:italic; border-top:1px solid #e2e8f0; margin-top:16px; }
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="empresa">${datos.empresa}</div>
+  <div class="frase">${datos.frase}</div>
+  <div class="lema">${datos.lema}</div>
+</div>
+<div class="header-bar"></div>
+<div class="titulo-reporte">REPORTE DE TURNOS</div>
+<div class="empleado-box">
+  <div class="empleado-label">Datos del Empleado</div>
+  <div class="empleado-row"><span class="empleado-key">Nombre:</span><span>${datos.nombre}</span></div>
+  <div class="empleado-row"><span class="empleado-key">Documento:</span><span>${datos.documento}</span></div>
+  <div class="empleado-row"><span class="empleado-key">Cuenta:</span><span>${datos.cuenta} &nbsp;·&nbsp; ${datos.tipoCuenta} &nbsp;·&nbsp; ${datos.banco}</span></div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>Fecha</th><th>Horas</th><th>Nombre del Paciente</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${filas}
+    <tr class="total-row">
+      <td colspan="2">TOTAL</td>
+      <td class="total-val" style="text-align:center">${totalHoras} h</td>
+      <td class="total-val">${datos.turnos.length} turno${datos.turnos.length !== 1 ? 's' : ''}</td>
+    </tr>
+  </tbody>
+</table>
+<div class="pie">
+  ${datos.lema}<br/>Generado el ${fechaGen}
+</div>
+</body></html>`;
 }
 
-async function descargarPDF() {
-  const doc = generarPDF();
-  if (!doc) return;
+async function generarPDF() {
+  if (datos.turnos.length === 0) { showToast('⚠️ No hay turnos registrados', 'error'); return; }
+  showToast('⏳ Generando reporte...', '');
+  const html = construirHTMLReporte();
   const nombre = (document.getElementById('pdfNombre').value || 'Reporte_Turnos').replace(/\s+/g, '_');
-  doc.save(`${nombre}.pdf`);
-  showToast('✅ PDF descargado', 'success');
-}
 
-// Alias para el botón
-window.generarPDF = descargarPDF;
+  // Abrir en ventana nueva para imprimir/guardar como PDF
+  const win = window.open('', '_blank');
+  if (!win) {
+    // Si el popup fue bloqueado, usar blob URL
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombre + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('📄 Reporte guardado como HTML', 'success');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => {
+    win.focus();
+    win.print();
+    showToast('✅ Selecciona "Guardar como PDF" en imprimir', 'success');
+  }, 600);
+}
 
 async function compartirPDF() {
-  const doc = generarPDF(true);
-  if (!doc) return;
+  if (datos.turnos.length === 0) { showToast('⚠️ No hay turnos registrados', 'error'); return; }
+  showToast('⏳ Preparando reporte...', '');
+  const html = construirHTMLReporte();
   const nombre = (document.getElementById('pdfNombre').value || 'Reporte_Turnos').replace(/\s+/g, '_');
+
   try {
-    const blob = doc.output('blob');
-    const file = new File([blob], `${nombre}.pdf`, { type: 'application/pdf' });
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const file = new File([blob], nombre + '.html', { type: 'text/html' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Reporte de Turnos', text: 'Reporte de turnos IPS' });
-      showToast('✅ PDF compartido', 'success');
+      await navigator.share({ files: [file], title: 'Reporte de Turnos IPS', text: datos.nombre + ' - ' + datos.turnos.length + ' turnos' });
+      showToast('✅ Reporte compartido', 'success');
     } else {
-      // Fallback: descargar
-      doc.save(`${nombre}.pdf`);
-      showToast('✅ PDF guardado (compartir no disponible)', 'success');
+      // Fallback: abrir para imprimir
+      generarPDF();
     }
-  } catch (e) {
-    if (e.name !== 'AbortError') {
-      doc.save(`${nombre}.pdf`);
-      showToast('✅ PDF guardado', 'success');
-    }
+  } catch(e) {
+    if (e.name !== 'AbortError') generarPDF();
   }
 }
 
