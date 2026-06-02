@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1a3a5c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Turnos IPS" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Reporte de Turnos - IPS</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap');
+
+    :root {
+      --navy: #1a3a5c;
+      --navy-light: #234f7a;
+      --teal: #0d9488;
+      --teal-light: #14b8a6;
+      --cream: #fdf8f0;
+      --gold: #d4a843;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --white: #ffffff;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --card-shadow: 0 4px 24px rgba(26,58,92,0.10);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      color: white;
+      padding: 24px 20px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      display: block;
+      height: 6px;
+      background: linear-gradient(90deg, var(--teal), var(--gold), var(--teal));
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+    }
+    .header-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+    }
+    .header h1 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+    .header-sub {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      background: var(--navy);
+      border-bottom: 3px solid var(--teal);
+    }
+    .tab {
+      flex: 1;
+      padding: 13px 8px;
+      text-align: center;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+    }
+    .tab.active {
+      color: var(--teal-light);
+      border-bottom: 3px solid var(--teal-light);
+      margin-bottom: -3px;
+    }
+    .tab-icon { display: block; font-size: 1.2rem; margin-bottom: 2px; }
+
+    /* SECTIONS */
+    .section { display: none; padding: 20px 16px; }
+    .section.active { display: block; }
+
+    /* CARDS */
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--teal);
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--teal);
+      border-radius: 2px;
+    }
+
+    /* FORM FIELDS */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #f8fafc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+      background: white;
+    }
+    .field textarea { resize: vertical; min-height: 60px; }
+
+    /* BOTONES */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 22px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
+      color: white;
+      box-shadow: 0 4px 14px rgba(26,58,92,0.3);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-teal {
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      color: white;
+      box-shadow: 0 4px 14px rgba(13,148,136,0.3);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #b8860b, var(--gold));
+      color: white;
+      box-shadow: 0 4px 14px rgba(212,168,67,0.35);
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--navy);
+      color: var(--navy);
+    }
+    .btn-sm { padding: 8px 14px; font-size: 0.78rem; border-radius: 8px; }
+    .btn-full { width: 100%; }
+
+    /* TURNOS LIST */
+    .turno-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1.5px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .turno-item:focus-within { border-color: var(--teal); }
+    .turno-fecha {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .turno-horas {
+      font-size: 0.8rem;
+      color: var(--teal);
+      font-weight: 700;
+    }
+    .turno-paciente {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .turno-inputs {
+      display: grid;
+      grid-template-columns: 1fr 90px;
+      gap: 6px;
+      min-width: 0;
+    }
+    .turno-inputs input {
+      padding: 7px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      background: white;
+      color: var(--text);
+      width: 100%;
+    }
+    .turno-inputs input:focus {
+      outline: none;
+      border-color: var(--teal);
+    }
+    .turno-num {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--teal);
+      background: rgba(13,148,136,0.1);
+      border-radius: 6px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .delete-btn:active { background: #fee2e2; }
+
+    /* TOTALES */
+    .total-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
+      color: white;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-top: 6px;
+    }
+    .total-label { font-size: 0.8rem; opacity: 0.8; }
+    .total-value { font-size: 1.4rem; font-weight: 800; color: var(--teal-light); }
+
+    /* PREVIEW */
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 10px;
+    }
+    .preview-table th {
+      background: var(--navy);
+      color: white;
+      padding: 9px 10px;
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .preview-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-table tr:nth-child(even) td { background: #f8fafc; }
+    .preview-table tr:last-child td { border-bottom: none; }
+
+    /* PDF SECTION */
+    .pdf-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--navy);
+      color: white;
+      padding: 12px 22px;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      z-index: 999;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--teal); }
+    .toast.error { background: var(--danger); }
+
+    /* INSTALL BANNER */
+    .install-banner {
+      background: linear-gradient(135deg, var(--gold), #e6b820);
+      color: var(--navy);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .install-banner button {
+      background: var(--navy);
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .install-banner.hidden { display: none; }
+
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    /* FLOATING ADD */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--teal-light));
+      color: white;
+      font-size: 1.6rem;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(13,148,136,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      z-index: 100;
+    }
+    .fab:active { transform: scale(0.92); }
+    .fab.hidden { display: none; }
+
+    .section-tip {
+      background: rgba(13,148,136,0.07);
+      border-left: 3px solid var(--teal);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .empresa-frase {
+      font-style: italic;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="installBanner" class="install-banner hidden">
+  <span>📲 Instala esta app en tu celular</span>
+  <button onclick="installApp()">Instalar</button>
+</div>
+
+<div class="header">
+  <div class="header-logo">IPS Fundamentos del Cuidado</div>
+  <h1>📋 Reporte de Turnos</h1>
+  <div class="header-sub">"Donde se cruzan las necesidades del mundo y tus talentos, allí está tu vocación."</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('empleado')">
+    <span class="tab-icon">👤</span>Empleado
+  </button>
+  <button class="tab" onclick="showTab('turnos')">
+    <span class="tab-icon">🗓️</span>Turnos
+  </button>
+  <button class="tab" onclick="showTab('preview')">
+    <span class="tab-icon">👁️</span>Vista Previa
+  </button>
+  <button class="tab" onclick="showTab('exportar')">
+    <span class="tab-icon">📄</span>Exportar
+  </button>
+</div>
+
+<!-- SECCIÓN EMPLEADO -->
+<div id="tab-empleado" class="section active">
+  <div class="section-tip">✏️ Completa los datos del empleado y la empresa para el reporte.</div>
+
+  <div class="card">
+    <div class="card-title">Datos de la Empresa</div>
+    <div class="field">
+      <label>Nombre de la empresa</label>
+      <input type="text" id="empresa" value="IPS FUNDAMENTOS DEL CUIDADO" />
+    </div>
+    <div class="field">
+      <label>Frase institucional</label>
+      <textarea id="frase" rows="2">Tú Labor y Valores son Apreciados por está Empresa, Gracias</textarea>
+    </div>
+    <div class="field">
+      <label>Lema / Cita</label>
+      <textarea id="lema" rows="2">"Donde se cruzan las necesidades del mundo y tus talentos, allí está tu vocación."</textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Datos del Empleado</div>
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" value="Michell León" />
+    </div>
+    <div class="field">
+      <label>Número de documento</label>
+      <input type="number" id="documento" value="1149457632" />
+    </div>
+    <div class="field">
+      <label>Banco</label>
+      <input type="text" id="banco" value="Bancolombia" />
+    </div>
+    <div class="field">
+      <label>Tipo de cuenta</label>
+      <select id="tipoCuenta">
+        <option value="Ahorros" selected>Ahorros</option>
+        <option value="Corriente">Corriente</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Número de cuenta</label>
+      <input type="text" id="cuenta" value="300-855462-32" />
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-full" onclick="guardarEmpleado()">
+    💾 Guardar datos
+  </button>
+</div>
+
+<!-- SECCIÓN TURNOS -->
+<div id="tab-turnos" class="section">
+  <div class="section-tip">➕ Agrega cada turno con fecha, horas y nombre del paciente. Usa el botón verde para añadir.</div>
+
+  <div class="card">
+    <div class="card-title">Lista de Turnos</div>
+    <div id="turnosList"></div>
+    <div class="total-badge" id="totalBadge">
+      <div>
+        <div class="total-label">Total Turnos</div>
+        <div class="total-value" id="totalTurnos">0 turnos</div>
+      </div>
+      <div>
+        <div class="total-label">Total Horas</div>
+        <div class="total-value" id="totalHoras">0 h</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Agregar Turno Rápido</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field" style="margin:0">
+        <label>Fecha</label>
+        <input type="date" id="newFecha" />
+      </div>
+      <div class="field" style="margin:0">
+        <label>Horas</label>
+        <input type="number" id="newHoras" value="24" min="1" max="24" />
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>Nombre del paciente</label>
+      <input type="text" id="newPaciente" placeholder="Nombre completo..." />
+    </div>
+    <button class="btn btn-teal btn-full" style="margin-top:6px" onclick="agregarTurno()">
+      ➕ Agregar Turno
+    </button>
+  </div>
+</div>
+
+<!-- SECCIÓN PREVIEW -->
+<div id="tab-preview" class="section">
+  <div class="section-tip">👁️ Así quedará tu reporte. Revisa antes de exportar.</div>
+
+  <div class="card" id="previewCard">
+    <div style="text-align:center;padding:10px 0 6px">
+      <strong id="prev-empresa" style="font-size:1rem;color:var(--navy)"></strong>
+      <div id="prev-frase" style="font-size:0.78rem;color:var(--text-muted);margin-top:4px"></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:0.85rem;margin-bottom:10px">
+      <div><strong>Empleado:</strong> <span id="prev-nombre"></span></div>
+      <div><strong>Documento:</strong> <span id="prev-doc"></span></div>
+      <div><strong>Cuenta:</strong> <span id="prev-cuenta"></span></div>
+    </div>
+
+    <div class="card-title">Turnos Registrados</div>
+    <table class="preview-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Horas</th>
+          <th>Paciente</th>
+        </tr>
+      </thead>
+      <tbody id="previewBody"></tbody>
+    </table>
+
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
+      <strong style="color:var(--navy)">Total:</strong>
+      <span id="prev-total" style="font-weight:800;color:var(--teal);font-size:1.05rem"></span>
+    </div>
+    <div id="prev-lema" class="empresa-frase"></div>
+  </div>
+
+  <button class="btn btn-teal btn-full" onclick="showTab('exportar')">
+    📄 Ir a Exportar PDF
+  </button>
+</div>
+
+<!-- SECCIÓN EXPORTAR -->
+<div id="tab-exportar" class="section">
+  <div class="section-tip">📄 Genera tu reporte en PDF listo para compartir o imprimir.</div>
+
+  <div class="card">
+    <div class="card-title">Opciones de Exportación</div>
+    <div class="field">
+      <label>Nombre del archivo PDF</label>
+      <input type="text" id="pdfNombre" value="Reporte_Turnos" />
+    </div>
+    <div class="field">
+      <label>Orientación</label>
+      <select id="pdfOrientacion">
+        <option value="p">Vertical (Portrait)</option>
+        <option value="l">Horizontal (Landscape)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="pdf-actions">
+    <button class="btn btn-gold btn-full" onclick="generarPDF()">
+      📥 Descargar PDF
+    </button>
+    <button class="btn btn-primary btn-full" onclick="compartirPDF()">
+      📤 Compartir PDF
+    </button>
+  </div>
+
+  <div style="margin-top:16px">
+    <button class="btn btn-outline btn-full btn-sm" onclick="resetearTodo()">
+      🗑️ Nuevo Reporte (borrar todo)
+    </button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fabBtn" onclick="agregarTurnoFab()">+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =================== ESTADO ===================
+let datos = {
+  empresa: 'IPS FUNDAMENTOS DEL CUIDADO',
+  frase: 'Tú Labor y Valores son Apreciados por está Empresa, Gracias',
+  lema: '"Donde se cruzan las necesidades del mundo y tus talentos, allí está tu vocación."',
+  nombre: 'Michell León',
+  documento: '1149457632',
+  banco: 'Bancolombia',
+  tipoCuenta: 'Ahorros',
+  cuenta: '300-855462-32',
+  turnos: []
+};
+
+// =================== INIT ===================
+window.addEventListener('load', () => {
+  cargarDatos();
+  renderTurnos();
+  actualizarPreview();
+  setFechaHoy();
+});
+
+function setFechaHoy() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('newFecha').value = hoy;
+}
+
+// =================== PERSISTENCIA ===================
+function guardarStorage() {
+  try { localStorage.setItem('turnosApp', JSON.stringify(datos)); } catch(e){}
+}
+function cargarDatos() {
+  try {
+    const saved = localStorage.getItem('turnosApp');
+    if (saved) {
+      datos = { ...datos, ...JSON.parse(saved) };
+      // Llenar campos empleado
+      document.getElementById('empresa').value = datos.empresa;
+      document.getElementById('frase').value = datos.frase;
+      document.getElementById('lema').value = datos.lema;
+      document.getElementById('nombre').value = datos.nombre;
+      document.getElementById('documento').value = datos.documento;
+      document.getElementById('banco').value = datos.banco;
+      document.getElementById('tipoCuenta').value = datos.tipoCuenta;
+      document.getElementById('cuenta').value = datos.cuenta;
+    } else {
+      // Cargar datos predeterminados del documento original
+      datos.turnos = generarTurnosDefault();
+    }
+  } catch(e) {
+    datos.turnos = generarTurnosDefault();
+  }
+}
+
+function generarTurnosDefault() {
+  const listaDef = [
+    { fecha: '2026-05-16', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-17', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-18', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-19', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-21', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-22', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-23', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-24', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-25', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-26', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-27', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-28', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-29', horas: 24, paciente: 'Miguel Santamaría' },
+    { fecha: '2026-05-30', horas: 24, paciente: 'Miguel Santamaría' },
+  ];
+  return listaDef.map((t, i) => ({ ...t, id: Date.now() + i }));
+}
+
+// =================== TABS ===================
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab')[['empleado','turnos','preview','exportar'].indexOf(name)].classList.add('active');
+  document.getElementById('fabBtn').classList.toggle('hidden', name !== 'turnos');
+  if (name === 'preview' || name === 'exportar') actualizarPreview();
+}
+
+// =================== EMPLEADO ===================
+function guardarEmpleado() {
+  datos.empresa = document.getElementById('empresa').value.trim();
+  datos.frase = document.getElementById('frase').value.trim();
+  datos.lema = document.getElementById('lema').value.trim();
+  datos.nombre = document.getElementById('nombre').value.trim();
+  datos.documento = document.getElementById('documento').value.trim();
+  datos.banco = document.getElementById('banco').value.trim();
+  datos.tipoCuenta = document.getElementById('tipoCuenta').value;
+  datos.cuenta = document.getElementById('cuenta').value.trim();
+  guardarStorage();
+  showToast('✅ Datos guardados', 'success');
+}
+
+// =================== TURNOS ===================
+function renderTurnos() {
+  const container = document.getElementById('turnosList');
+  container.innerHTML = '';
+  if (datos.turnos.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;font-size:0.88rem;">No hay turnos. Agrega uno abajo ⬇️</p>';
+  } else {
+    datos.turnos.forEach((t, i) => {
+      const div = document.createElement('div');
+      div.className = 'turno-item';
+      div.innerHTML = `
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span class="turno-num">T${i+1}</span>
+          </div>
+          <div class="turno-inputs">
+            <input type="date" value="${t.fecha}" onchange="editarTurno(${t.id},'fecha',this.value)" />
+            <input type="number" value="${t.horas}" min="1" max="48" placeholder="Hrs" onchange="editarTurno(${t.id},'horas',this.value)" />
+          </div>
+          <input type="text" value="${t.paciente}" placeholder="Nombre paciente" 
+            style="margin-top:5px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Nunito',sans-serif;font-size:0.82rem;background:white;color:var(--text);width:100%"
+            onchange="editarTurno(${t.id},'paciente',this.value)" />
+        </div>
+        <button class="delete-btn" onclick="eliminarTurno(${t.id})" title="Eliminar">🗑️</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+  actualizarTotal();
+}
+
+function actualizarTotal() {
+  const total = datos.turnos.length;
+  const horas = datos.turnos.reduce((s, t) => s + Number(t.horas || 0), 0);
+  document.getElementById('totalTurnos').textContent = total + (total === 1 ? ' turno' : ' turnos');
+  document.getElementById('totalHoras').textContent = horas + ' h';
+}
+
+function agregarTurno() {
+  const fecha = document.getElementById('newFecha').value;
+  const horas = parseInt(document.getElementById('newHoras').value) || 24;
+  const paciente = document.getElementById('newPaciente').value.trim();
+  if (!fecha) { showToast('⚠️ Selecciona una fecha', 'error'); return; }
+  if (!paciente) { showToast('⚠️ Ingresa el nombre del paciente', 'error'); return; }
+  datos.turnos.push({ id: Date.now(), fecha, horas, paciente });
+  datos.turnos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  guardarStorage();
+  renderTurnos();
+  document.getElementById('newPaciente').value = '';
+  showToast('✅ Turno agregado', 'success');
+}
+
+function agregarTurnoFab() { showTab('turnos'); document.getElementById('newFecha').focus(); }
+
+function editarTurno(id, campo, valor) {
+  const t = datos.turnos.find(t => t.id === id);
+  if (t) { t[campo] = campo === 'horas' ? parseInt(valor) : valor; }
+  guardarStorage();
+  actualizarTotal();
+}
+
+function eliminarTurno(id) {
+  if (!confirm('¿Eliminar este turno?')) return;
+  datos.turnos = datos.turnos.filter(t => t.id !== id);
+  guardarStorage();
+  renderTurnos();
+  showToast('🗑️ Turno eliminado');
+}
+
+// =================== PREVIEW ===================
+function actualizarPreview() {
+  document.getElementById('prev-empresa').textContent = datos.empresa;
+  document.getElementById('prev-frase').textContent = datos.frase;
+  document.getElementById('prev-nombre').textContent = datos.nombre;
+  document.getElementById('prev-doc').textContent = datos.documento;
+  document.getElementById('prev-cuenta').textContent = `${datos.cuenta} - ${datos.tipoCuenta} - ${datos.banco}`;
+  document.getElementById('prev-lema').textContent = datos.lema;
+  const horas = datos.turnos.reduce((s, t) => s + Number(t.horas || 0), 0);
+  document.getElementById('prev-total').textContent = `${datos.turnos.length} turnos · ${horas} horas`;
+  const body = document.getElementById('previewBody');
+  body.innerHTML = '';
+  datos.turnos.forEach((t, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${formatFecha(t.fecha)}</td><td>${t.horas} h</td><td>${t.paciente}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function formatFecha(fecha) {
+  if (!fecha) return '';
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const [y, m, d] = fecha.split('-');
+  return `${parseInt(d)}/${meses[parseInt(m)-1]}/${y}`;
+}
+
+// =================== PDF ===================
+function generarPDF(compartir = false) {
+  if (datos.turnos.length === 0) { showToast('⚠️ No hay turnos', 'error'); return null; }
+  const { jsPDF } = window.jspdf;
+  const orientacion = document.getElementById('pdfOrientacion').value;
+  const doc = new jsPDF({ orientation: orientacion, unit: 'mm', format: 'a4' });
+  const pw = orientacion === 'p' ? 210 : 297;
+  const ph = orientacion === 'p' ? 297 : 210;
+  const mg = 18;
+  let y = mg;
+
+  // Fondo header
+  doc.setFillColor(26, 58, 92);
+  doc.rect(0, 0, pw, 36, 'F');
+  // Barra dorada
+  doc.setFillColor(212, 168, 67);
+  doc.rect(0, 36, pw, 2.5, 'F');
+
+  // Empresa
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(datos.empresa, pw / 2, 14, { align: 'center' });
+  // Frase
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(200, 230, 230);
+  doc.text(datos.frase, pw / 2, 22, { align: 'center' });
+  // Lema
+  doc.setFontSize(7);
+  doc.setTextColor(180, 210, 210);
+  const lemaLines = doc.splitTextToSize(datos.lema, pw - 30);
+  doc.text(lemaLines, pw / 2, 29, { align: 'center' });
+
+  y = 46;
+
+  // Título reporte
+  doc.setFillColor(240, 248, 255);
+  doc.roundedRect(mg, y, pw - mg * 2, 10, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(26, 58, 92);
+  doc.text('REPORTE DE TURNOS', pw / 2, y + 7, { align: 'center' });
+  y += 17;
+
+  // Datos empleado
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(mg, y, pw - mg * 2, 28, 2, 2, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(mg, y, pw - mg * 2, 28, 2, 2, 'S');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(13, 148, 136);
+  doc.text('DATOS DEL EMPLEADO', mg + 5, y + 6);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(26, 58, 92);
+  doc.text('Nombre:', mg + 5, y + 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 41, 59);
+  doc.text(datos.nombre, mg + 30, y + 13);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(26, 58, 92);
+  doc.text('Documento:', mg + 5, y + 19);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 41, 59);
+  doc.text(String(datos.documento), mg + 30, y + 19);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(26, 58, 92);
+  doc.text('Cuenta:', mg + 5, y + 25);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 41, 59);
+  doc.text(`${datos.cuenta}  ·  ${datos.tipoCuenta}  ·  ${datos.banco}`, mg + 30, y + 25);
+  y += 35;
+
+  // Tabla header
+  const colWidths = [14, 40, 26, pw - mg * 2 - 14 - 40 - 26];
+  const cols = ['#', 'Fecha', 'Horas', 'Nombre del Paciente'];
+  doc.setFillColor(26, 58, 92);
+  doc.roundedRect(mg, y, pw - mg * 2, 9, 1, 1, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  let cx = mg + 3;
+  cols.forEach((c, i) => {
+    doc.text(c, cx, y + 6);
+    cx += colWidths[i];
+  });
+  y += 9;
+
+  // Filas
+  datos.turnos.forEach((t, i) => {
+    const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+    doc.setFillColor(...bg);
+    doc.rect(mg, y, pw - mg * 2, 8, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.line(mg, y + 8, mg + pw - mg * 2, y + 8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 41, 59);
+    cx = mg + 3;
+    const rowData = [String(i + 1), formatFecha(t.fecha), `${t.horas} horas`, t.paciente];
+    rowData.forEach((d, j) => {
+      if (j === 0) { doc.setFont('helvetica', 'bold'); doc.setTextColor(13, 148, 136); }
+      else { doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 41, 59); }
+      doc.text(d, cx, y + 5.5);
+      cx += colWidths[j];
+    });
+    y += 8;
+
+    // Nueva página si es necesario
+    if (y > ph - 40) {
+      doc.addPage();
+      y = 20;
+    }
+  });
+
+  // Totales
+  y += 5;
+  const totalHoras = datos.turnos.reduce((s, t) => s + Number(t.horas || 0), 0);
+  doc.setFillColor(26, 58, 92);
+  doc.roundedRect(mg, y, pw - mg * 2, 12, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text('TOTAL:', mg + 5, y + 8);
+  doc.setTextColor(20, 184, 166);
+  doc.text(`${datos.turnos.length} turnos  ·  ${totalHoras} horas totales`, mg + 26, y + 8);
+  y += 20;
+
+  // Pie de página
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  const lemaLines2 = doc.splitTextToSize(datos.lema, pw - mg * 2);
+  doc.text(lemaLines2, pw / 2, y, { align: 'center' });
+  y += lemaLines2.length * 4 + 4;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  const fechaGen = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+  doc.text(`Generado el ${fechaGen}`, pw / 2, y, { align: 'center' });
+
+  return doc;
+}
+
+async function descargarPDF() {
+  const doc = generarPDF();
+  if (!doc) return;
+  const nombre = (document.getElementById('pdfNombre').value || 'Reporte_Turnos').replace(/\s+/g, '_');
+  doc.save(`${nombre}.pdf`);
+  showToast('✅ PDF descargado', 'success');
+}
+
+// Alias para el botón
+window.generarPDF = descargarPDF;
+
+async function compartirPDF() {
+  const doc = generarPDF(true);
+  if (!doc) return;
+  const nombre = (document.getElementById('pdfNombre').value || 'Reporte_Turnos').replace(/\s+/g, '_');
+  try {
+    const blob = doc.output('blob');
+    const file = new File([blob], `${nombre}.pdf`, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Reporte de Turnos', text: 'Reporte de turnos IPS' });
+      showToast('✅ PDF compartido', 'success');
+    } else {
+      // Fallback: descargar
+      doc.save(`${nombre}.pdf`);
+      showToast('✅ PDF guardado (compartir no disponible)', 'success');
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      doc.save(`${nombre}.pdf`);
+      showToast('✅ PDF guardado', 'success');
+    }
+  }
+}
+
+// =================== RESET ===================
+function resetearTodo() {
+  if (!confirm('¿Borrar todos los datos y empezar un reporte nuevo?')) return;
+  datos.turnos = [];
+  guardarStorage();
+  renderTurnos();
+  showToast('🗑️ Reporte limpiado');
+  showTab('empleado');
+}
+
+// =================== TOAST ===================
+function showToast(msg, tipo = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (tipo ? ' ' + tipo : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// =================== INSTALL PWA ===================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.add('hidden');
+    });
+  }
+}
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.add('hidden');
+});
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}</script>
+</body>
+</html>
